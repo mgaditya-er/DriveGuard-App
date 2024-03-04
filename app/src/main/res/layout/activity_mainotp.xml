@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- res/layout/activity_main.xml -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:background="#939393"
+    tools:context=".MainActivity2">
+
+    <!-- Image -->
+    <ImageView
+        android:id="@+id/imageView"
+        android:layout_width="match_parent"
+        android:layout_height="300dp"
+        android:src="@drawable/bikelogo"
+        android:scaleType="centerCrop"
+        android:layout_marginBottom="16dp"/>
+
+    <!-- Input field for entering the phone number -->
+    <EditText
+        android:id="@+id/editTextPhoneNumber"
+        android:layout_width="match_parent"
+        android:layout_height="55dp"
+        android:layout_marginTop="15dp"
+        android:textSize="16sp"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginEnd="20dp"
+        android:hint="Enter Phone Number"
+        android:inputType="phone"
+
+        android:background="@drawable/round_dark_back_10"
+        android:textColor="@color/black"
+        android:enabled="true"/>
+
+    <!-- Button to send OTP -->
+    <Button
+        android:id="@+id/buttonSendOtp"
+        android:layout_width="match_parent"
+        android:layout_height="55dp"
+        android:layout_marginTop="15dp"
+        android:textSize="16sp"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginEnd="20dp"
+        android:text="Send OTP"
+
+        android:textStyle="bold"
+
+        android:background="@drawable/round_dark_back_20"
+
+    android:enabled="true"/>
+
+
+
+    <!-- Input field for entering the OTP -->
+    <EditText
+        android:id="@+id/editTextOtp"
+        android:layout_width="match_parent"
+        android:layout_height="55dp"
+        android:layout_marginTop="15dp"
+        android:textSize="16sp"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginEnd="20dp"
+        android:hint="Enter OTP"
+        android:inputType="number"
+        android:background="@drawable/round_dark_back_10"
+        android:enabled="false"/>
+
+    <!-- Button to verify OTP -->
+    <Button
+        android:id="@+id/buttonVerifyOtp"
+        android:layout_width="match_parent"
+        android:layout_height="55dp"
+        android:layout_marginTop="15dp"
+        android:textSize="16sp"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginEnd="20dp"
+        android:text="Verify OTP"
+        android:background="@drawable/round_dark_back_20"
+        android:enabled="false"/>
+
+    <!-- Progress Bar -->
+    <ProgressBar
+        android:id="@+id/bar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:visibility="invisible"/>
+</LinearLayout>

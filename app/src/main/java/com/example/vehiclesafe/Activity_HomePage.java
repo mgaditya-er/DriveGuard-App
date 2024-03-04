@@ -8,6 +8,7 @@ import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.Toast;
 
@@ -21,12 +22,19 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.vehiclesafe.adapter.CallLogAdapter;
 import com.example.vehiclesafe.databinding.ActivityHomePageBinding;
 import com.example.vehiclesafe.model.CallLogModel;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.firebase.auth.FirebaseAuth;
 
 import java.util.List;
 
 public class Activity_HomePage extends AppCompatActivity {
 
     ActivityHomePageBinding binding;
+    FirebaseAuth mAuth;
+
+
+    FloatingActionButton signOutButton ;
+    private boolean isDoNotDisturbModeEnabled = false;
 
     RecyclerView recyclerView;
 
@@ -37,7 +45,7 @@ public class Activity_HomePage extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         binding = ActivityHomePageBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
-
+        signOutButton = findViewById(R.id.signOutButton);
         recyclerView = findViewById(R.id.itemsRecycler);
 
 
@@ -54,13 +62,35 @@ public class Activity_HomePage extends AppCompatActivity {
                 Toast.makeText(Activity_HomePage.this, "Permission Clicked", Toast.LENGTH_SHORT).show();
             }
         });
+        signOutButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+//                mAuth.signOut();
+                FirebaseAuth.getInstance().signOut();
+                startActivity(new Intent(Activity_HomePage.this,MainActivity2.class));
+                finish();
+            }
+        });
+
                 // Set an OnClickListener for the ImageButton
         electricBikeButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 // Display a toas524+65+/11528t message when the ImageButton is clicked
-                enableDoNotDisturbMode();
-                Toast.makeText(Activity_HomePage.this, "ImageButton Clicked", Toast.LENGTH_SHORT).show();
+
+                if(isDoNotDisturbModeEnabled)
+                {
+                    disableDoNotDisturbMode();
+
+                    isDoNotDisturbModeEnabled = false;
+                    Toast.makeText(Activity_HomePage.this, "DND DisAbled", Toast.LENGTH_SHORT).show();
+
+                }
+                else {
+                    enableDoNotDisturbMode();
+                    isDoNotDisturbModeEnabled = true;
+                    Toast.makeText(Activity_HomePage.this, "DND Enabled", Toast.LENGTH_SHORT).show();
+                }
             }
         });
 
@@ -102,6 +132,25 @@ public class Activity_HomePage extends AppCompatActivity {
             // Activate Do Not Disturb mode
             if (notificationManager != null) {
                 notificationManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_NONE);
+                Toast.makeText(this, "Do Not Disturb mode enabled.", Toast.LENGTH_SHORT).show();
+            }
+        } else {
+            // Ask the user to grant the permission manually
+            Toast.makeText(this, "Please grant notification access permission manually.", Toast.LENGTH_LONG).show();
+            requestNotificationPolicyAccess();
+        }
+    }
+    private void disableDoNotDisturbMode()
+    {
+        // Get the NotificationManager service
+        NotificationManager notificationManager =
+                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+
+        // Check if the user has granted your app the permission to change DND mode
+        if (isNotificationPolicyAccessGranted()) {
+            // Activate Do Not Disturb mode
+            if (notificationManager != null) {
+                notificationManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL);
                 Toast.makeText(this, "Do Not Disturb mode enabled.", Toast.LENGTH_SHORT).show();
             }
         } else {
@@ -162,5 +211,6 @@ public class Activity_HomePage extends AppCompatActivity {
         recyclerView.setAdapter(adapter);
 
     }
+
 
 }

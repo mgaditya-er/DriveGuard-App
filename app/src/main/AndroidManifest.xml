@@ -12,6 +12,11 @@
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
     <uses-permission android:name="android.permission.READ_CALL_LOG" />
 
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.READ_CALL_LOG" />
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -21,22 +26,31 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.VehicleSafe"
         tools:targetApi="31">
-        <activity android:name=".Activity_Contacts"
+        <activity
+            android:name=".MainActivity2"
+            android:exported="true" >
+        <intent-filter>
+            <action android:name="android.intent.action.MAIN" />
+
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent-filter>
+        </activity>
+        <activity
+            android:name=".Activity_Contacts"
             android:exported="false" />
-        <activity android:name=".Activity_Signup"
+        <activity
+            android:name=".Activity_Signup"
             android:exported="false" />
-        <activity android:name=".Activity_CallLogs"
+        <activity
+            android:name=".Activity_CallLogs"
             android:exported="false" />
-        <activity android:name=".Activity_HomePage"
+        <activity
+            android:name=".Activity_HomePage"
             android:exported="false" />
         <activity
             android:name=".MainActivity"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
+            android:exported="false">
 
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
         </activity>
     </application>
 

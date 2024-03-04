@@ -39,8 +39,8 @@
             android:orientation="vertical">
 
             <TextView
+                android:id="@+id/contactTextView"
                 android:padding="5dp"
-                android:id="@+id/contact_name"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Contact Name"/>

@@ -50,10 +50,10 @@ public class CallLogAdapter extends RecyclerView.Adapter<CallLogAdapter.CallLogV
 
         CallLogViewHolder(View itemView) {
             super(itemView);
-            callerName = itemView.findViewById(R.id.layout_call_log_contact_name);
-            phoneNumber = itemView.findViewById(R.id.layout_call_log_ph_no);
-            callType = itemView.findViewById(R.id.layout_call_log_type);
-            callDate = itemView.findViewById(R.id.layout_call_log_date);
+//            callerName = itemView.findViewById(R.id.layout_call_log_contact_name);
+//            phoneNumber = itemView.findViewById(R.id.layout_call_log_ph_no);
+//            callType = itemView.findViewById(R.id.layout_call_log_type);
+//            callDate = itemView.findViewById(R.id.layout_call_log_date);
         }
     }
 
