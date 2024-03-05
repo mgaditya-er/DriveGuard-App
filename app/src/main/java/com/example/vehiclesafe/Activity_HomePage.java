@@ -46,7 +46,7 @@ public class Activity_HomePage extends AppCompatActivity {
         binding = ActivityHomePageBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
         signOutButton = findViewById(R.id.signOutButton);
-        recyclerView = findViewById(R.id.itemsRecycler);
+//        recyclerView = findViewById(R.id.itemsRecycler);
 
 
         // Find the ImageButton by its ID
