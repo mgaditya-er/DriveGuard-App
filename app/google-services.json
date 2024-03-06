@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "457193674034",
+    "project_id": "driveguard2-a3dbe",
+    "storage_bucket": "driveguard2-a3dbe.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:457193674034:android:d6ab21083294a47b94732b",
+        "android_client_info": {
+          "package_name": "com.example.vehiclesafe"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAwpcbvJAG7CKMcx_RLUtQYgOir4LFba4Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
