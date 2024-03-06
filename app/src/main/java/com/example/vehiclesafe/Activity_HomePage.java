@@ -57,7 +57,7 @@ public class Activity_HomePage extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 Toast.makeText(Activity_HomePage.this, "Emergency", Toast.LENGTH_SHORT).show();
-                requestSmsPermission();
+//                requestSmsPermission();
 //                String phoneNumber = "+919373616244"; // Replace with the recipient's phone number
 //                String customMessage = "Emergency !"; // Replace with your custom message
 //                sendCustomizedSMS(phoneNumber, customMessage);

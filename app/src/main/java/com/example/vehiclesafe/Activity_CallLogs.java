@@ -140,7 +140,7 @@ public class Activity_CallLogs extends AppCompatActivity {
 private void showMissedCalls() {
     String[] projection = {CallLog.Calls._ID, CallLog.Calls.NUMBER, CallLog.Calls.CACHED_NAME, CallLog.Calls.DATE};
     String selection = CallLog.Calls.TYPE + " = ? AND " + CallLog.Calls.DATE + " > ?";
-    String[] selectionArgs = {String.valueOf(CallLog.Calls.MISSED_TYPE), String.valueOf(System.currentTimeMillis() - 60000)}; // Past hour
+    String[] selectionArgs = {String.valueOf(CallLog.Calls.MISSED_TYPE), String.valueOf(System.currentTimeMillis() - 600000)}; // 10 minutes
 
     Cursor cursor = getContentResolver().query(CallLog.Calls.CONTENT_URI, projection, selection, selectionArgs, CallLog.Calls.DATE + " DESC");
 
@@ -167,7 +167,7 @@ private void showMissedCalls() {
                     data.put("name", name);
                     data.put("number", number + " (" + callCountMap.get(number) + ")");
                     dataList.add(data);
-                    requestSmsPermission(name,number);
+//                    requestSmsPermission(name,number);
                 } else {
                     // If the number is already in the map, increment the count
                     int count = callCountMap.get(number);
@@ -177,7 +177,7 @@ private void showMissedCalls() {
 //                        Vibrator vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
 //                        // Vibrate for 500 milliseconds
 //                        vibrator.vibrate(500);
-                        requestSmsPermission(name,number);
+//                        requestSmsPermission(name,number);
                     }
                     for (Map<String, String> data : dataList) {
                         if (data.get("number").startsWith(number)) {
@@ -213,14 +213,14 @@ private void showMissedCalls() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS) == PackageManager.PERMISSION_GRANTED) {
                 // Permission already granted, proceed to send SMS
-                sendCustomizedSMS("+91"+number, name);
+//                sendCustomizedSMS("+91"+number, name);
             } else {
                 // Request SMS permission
                 ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.SEND_SMS}, PERMISSION_REQUEST_CODE);
             }
         } else {
             // Permission is automatically granted on SDKs lower than Marshmallow
-            sendCustomizedSMS("+91"+number, name);
+//            sendCustomizedSMS("+91"+number, name);
         }
     }
 

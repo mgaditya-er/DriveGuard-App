@@ -5,6 +5,10 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.location.Address;
+import android.location.Geocoder;
+import android.location.Location;
+import android.media.AudioManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.telephony.SmsManager;
@@ -16,26 +20,36 @@ import android.widget.EditText;
 import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-
+import android.location.Address;
+import android.location.Geocoder;
+import android.location.Location;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.vehiclesafe.databinding.ActivityContactsBinding;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class Activity_Contacts extends AppCompatActivity {
     private FirebaseFirestore db;
     ContactAdapter adapter;
+    private final static int REQUEST_CODE = 100;
+
+    private static String addrr = "";
+    static FusedLocationProviderClient fusedLocationProviderClient;
     private static final int PERMISSION_REQUEST_CODE = 1;
     ActivityContactsBinding binding;
     List<String> contactList = new ArrayList<>();
@@ -180,39 +194,65 @@ public class Activity_Contacts extends AppCompatActivity {
                 });
     }
     public static void checkIncomingNumber(Context context, String incomingNumber) {
-        FirebaseFirestore db = FirebaseFirestore.getInstance();
-        AtomicInteger flag= new AtomicInteger(1);
-        String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
-        db.collection("users").document(userId).collection("contacts")
-                .whereEqualTo("phoneNumber", incomingNumber) // Use whereEqualTo for efficient query
-                .get()
-                .addOnSuccessListener(queryDocumentSnapshots -> {
-                    if (!queryDocumentSnapshots.isEmpty()) {
-                        // Priority number found
-                        Toast.makeText(context, "Priority number calling: " + incomingNumber, Toast.LENGTH_LONG).show();
-                        requestSmsPermission(context,incomingNumber,"Location");
-                        flag.set(2);
-                    } else {
-                        // Handle non-priority calls or log silently without flooding the user with toasts
-                        // Toast.makeText(context, "Low priority number: " + incomingNumber, Toast.LENGTH_LONG).show();
-                        Log.d("CheckIncomingNumber", "Non-priority call detected: " + incomingNumber);
-                        Toast.makeText(context, "Low Priority number calling: " + incomingNumber, Toast.LENGTH_LONG).show();
-                        if (flag.get() == 1) {
-                            Toast.makeText(context, "Low priority number calling: " + incomingNumber, Toast.LENGTH_LONG).show();
-                            requestSmsPermission(context, incomingNumber, " ");
+
+            FirebaseFirestore db = FirebaseFirestore.getInstance();
+            AtomicInteger flag = new AtomicInteger(1);
+            String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+            db.collection("users").document(userId).collection("contacts")
+                    .whereEqualTo("phoneNumber", incomingNumber) // Use whereEqualTo for efficient query
+                    .get()
+                    .addOnSuccessListener(queryDocumentSnapshots -> {
+                        if (!queryDocumentSnapshots.isEmpty()) {
+                            // Priority number found
+                            Toast.makeText(context, "Priority number calling: " + incomingNumber, Toast.LENGTH_LONG).show();
+//                            String loc = getLastLocation(context);
+                            requestSmsPermission(context, incomingNumber, "Location");
+                            Toast.makeText(context, "" + "Location Link", Toast.LENGTH_SHORT).show();
+                            flag.set(2);
+                        } else {
+                            // Handle non-priority calls or log silently without flooding the user with toasts
+                            // Toast.makeText(context, "Low priority number: " + incomingNumber, Toast.LENGTH_LONG).show();
+                            Log.d("CheckIncomingNumber", "Non-priority call detected: " + incomingNumber);
+
+
                         }
-                    }
-                })
-                .addOnFailureListener(e -> {
-                    // Log error or handle failure silently
-                    Log.e("CheckIncomingNumber", "Error checking for priority number", e);
-                });
-        if(flag.equals(1))
-        {Toast.makeText(context, "Low priority number calling: " + incomingNumber, Toast.LENGTH_LONG).show();
-
-            requestSmsPermission(context,incomingNumber," ");
-
+                    })
+                    .addOnFailureListener(e -> {
+                        // Log error or handle failure silently
+                        Log.e("CheckIncomingNumber", "Error checking for priority number", e);
+                    });
+        if (flag.get() == 1) {
+            Toast.makeText(context, "Low priority number calling: " + incomingNumber, Toast.LENGTH_LONG).show();
+            requestSmsPermission(context, incomingNumber, " ");
         }
+
+    }
+
+
+
+
+    private static String  getLastLocation(Context context) {
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            fusedLocationProviderClient.getLastLocation()
+                    .addOnSuccessListener(new OnSuccessListener<Location>() {
+                        @Override
+                        public void onSuccess(Location location) {
+                            if (location != null) {
+                                try {
+                                    Geocoder geocoder = new Geocoder(context, Locale.getDefault());
+                                    List<Address> addresses = geocoder.getFromLocation(location.getLatitude(), location.getLongitude(), 1);
+//                                    updateUI(addresses.get(0));
+                                    addrr = addresses.get(0).getAddressLine(0);
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        }
+                    });
+        } else {
+            Toast.makeText(context, "Give Location permission", Toast.LENGTH_SHORT).show(); // Ask for permissions if not granted
+        }
+        return addrr;
     }
 
     private static void requestSmsPermission(Context context,String incomingNumber, String location) {
