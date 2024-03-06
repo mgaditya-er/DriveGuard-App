@@ -59,6 +59,12 @@
             android:exported="false">
 
         </activity>
+        <receiver android:name=".IncomingCallReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.PHONE_STATE" />
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>

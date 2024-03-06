@@ -2,8 +2,15 @@ package com.example.vehiclesafe;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.location.Address;
+import android.location.Geocoder;
+import android.location.Location;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.View;
@@ -12,7 +19,9 @@ import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
+import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.FirebaseException;
 import com.google.firebase.auth.AuthResult;
@@ -22,6 +31,9 @@ import com.google.firebase.auth.PhoneAuthCredential;
 import com.google.firebase.auth.PhoneAuthOptions;
 import com.google.firebase.auth.PhoneAuthProvider;
 
+import java.io.IOException;
+import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
 public class MainActivity2 extends AppCompatActivity {
@@ -29,8 +41,10 @@ public class MainActivity2 extends AppCompatActivity {
     EditText phone,otp;
     Button btnsendotp,btnverifyotp;
     String verficationId;
+
     ProgressBar bar;
     FirebaseAuth mAuth;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -42,7 +56,6 @@ public class MainActivity2 extends AppCompatActivity {
         btnverifyotp = findViewById(R.id.buttonVerifyOtp);
         mAuth = FirebaseAuth.getInstance();
         bar = findViewById(R.id.bar);
-
 
         btnsendotp.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -74,6 +87,9 @@ public class MainActivity2 extends AppCompatActivity {
             }
         });
     }
+
+
+
     private void verifycode(String code) {
 
         PhoneAuthCredential cred = PhoneAuthProvider.getCredential(verficationId,code);
@@ -152,4 +168,5 @@ public class MainActivity2 extends AppCompatActivity {
         }
 
   }
+
 }

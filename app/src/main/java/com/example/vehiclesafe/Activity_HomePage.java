@@ -52,6 +52,7 @@ public class Activity_HomePage extends AppCompatActivity {
         sosbtn = findViewById(R.id.SOS);
 //        recyclerView = findViewById(R.id.itemsRecycler);
 
+
         sosbtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {

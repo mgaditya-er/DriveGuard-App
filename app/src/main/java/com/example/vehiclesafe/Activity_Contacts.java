@@ -1,7 +1,9 @@
 package com.example.vehiclesafe;
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
@@ -105,7 +107,7 @@ public class Activity_Contacts extends AppCompatActivity {
                     contactList.clear(); // Clear existing data
                     for (DocumentSnapshot document : queryDocumentSnapshots) {
                         String name = document.getString("name");
-                        String contact = document.getString("contact");
+                        String contact = document.getString("phoneNumber");
                         String contactInfo = name + " - " + contact;
                         contactList.add(contactInfo);
                     }
@@ -169,4 +171,28 @@ public class Activity_Contacts extends AppCompatActivity {
                     Toast.makeText(Activity_Contacts.this, "Error saving contact", Toast.LENGTH_SHORT).show();
                 });
     }
+    public static void checkIncomingNumber(Context context, String incomingNumber) {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        db.collection("users").document(userId).collection("contacts")
+                .whereEqualTo("phoneNumber", incomingNumber) // Use whereEqualTo for efficient query
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    if (!queryDocumentSnapshots.isEmpty()) {
+                        // Priority number found
+                        Toast.makeText(context, "Priority number calling: " + incomingNumber, Toast.LENGTH_LONG).show();
+
+                    } else {
+                        // Handle non-priority calls or log silently without flooding the user with toasts
+                        // Toast.makeText(context, "Low priority number: " + incomingNumber, Toast.LENGTH_LONG).show();
+                        Log.d("CheckIncomingNumber", "Non-priority call detected: " + incomingNumber);
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    // Log error or handle failure silently
+                    Log.e("CheckIncomingNumber", "Error checking for priority number", e);
+                });
+    }
+
+
 }
