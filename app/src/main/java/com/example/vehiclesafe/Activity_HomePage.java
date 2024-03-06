@@ -81,6 +81,7 @@ public class Activity_HomePage extends AppCompatActivity {
             @Override
             public void onClick(View v) {
 //                mAuth.signOut();
+                disableDoNotDisturbMode();
                 FirebaseAuth.getInstance().signOut();
                 startActivity(new Intent(Activity_HomePage.this,MainActivity2.class));
                 finish();

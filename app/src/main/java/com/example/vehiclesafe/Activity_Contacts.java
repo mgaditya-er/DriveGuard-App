@@ -2,6 +2,7 @@ package com.example.vehiclesafe;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -12,6 +13,8 @@ import android.location.LocationManager;
 import android.media.AudioManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.VibrationEffect;
+import android.os.Vibrator;
 import android.telephony.SmsManager;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -57,6 +60,12 @@ public class Activity_Contacts extends AppCompatActivity {
     List<String> contactList = new ArrayList<>();
     FirebaseAuth auth = FirebaseAuth.getInstance();
 
+    private static final int VIBRATION_DURATION = 5000; // Vibration duration in milliseconds
+    private static final int CALL_THRESHOLD = 3; // Number of calls to trigger vibration
+
+    private static Map<String, AtomicInteger> callCountMap = new HashMap<>();
+    private static Vibrator vibrator;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,12 +78,12 @@ public class Activity_Contacts extends AppCompatActivity {
         String userId = auth.getCurrentUser().getUid();
         locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         LocationHelper locationHelper = new LocationHelper(locationManager);
+        vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
 
         binding.backBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 Intent intent = new Intent(Activity_Contacts.this, Activity_HomePage.class);
-
                 startActivity(intent);
                 finish();
             }
@@ -204,7 +213,14 @@ public class Activity_Contacts extends AppCompatActivity {
             FirebaseFirestore db = FirebaseFirestore.getInstance();
             AtomicInteger flag = new AtomicInteger(1);
             String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
-            db.collection("users").document(userId).collection("contacts")
+            AtomicInteger callCount = callCountMap.get(incomingNumber);
+            if (callCount == null) {
+                callCount = new AtomicInteger(0);
+                callCountMap.put(incomingNumber, callCount);
+            }
+//        AtomicInteger finalCallCount = callCount;
+        AtomicInteger finalCallCount = callCount;
+        db.collection("users").document(userId).collection("contacts")
                     .whereEqualTo("phoneNumber", incomingNumber) // Use whereEqualTo for efficient query
                     .get()
                     .addOnSuccessListener(queryDocumentSnapshots -> {
@@ -215,6 +231,14 @@ public class Activity_Contacts extends AppCompatActivity {
 
                             requestSmsPermission(context, incomingNumber, "Link"+googleMapsLink);
                             Toast.makeText(context, "" + "Link"+googleMapsLink, Toast.LENGTH_SHORT).show();
+                            int newCount = finalCallCount.incrementAndGet();
+
+                            // Check if the call count exceeds the threshold
+                            if (newCount >= CALL_THRESHOLD) {
+                                // Trigger vibration
+                                vibrate(context);
+                                Toast.makeText(context, "Vibrating due to repeated calls", Toast.LENGTH_SHORT).show();
+                            }
                             flag.set(2);
                         } else {
                             // Handle non-priority calls or log silently without flooding the user with toasts
@@ -235,6 +259,29 @@ public class Activity_Contacts extends AppCompatActivity {
 
     }
 
+    private static void vibrate(Context context) {
+        Vibrator vibrator = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
+        NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+
+        // Check if the user has granted your app the permission to change DND mode
+        if (notificationManager != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (notificationManager.isNotificationPolicyAccessGranted()) {
+                // Activate Do Not Disturb mode
+                notificationManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL);
+                // Toast.makeText(context, "Do Not Disturb mode enabled.", Toast.LENGTH_SHORT).show();
+            }
+        }
+
+        if (vibrator != null) {
+            // Check if the device has a vibrator (required for API level 26 and above)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                vibrator.vibrate(VibrationEffect.createOneShot(VIBRATION_DURATION, VibrationEffect.DEFAULT_AMPLITUDE));
+            } else {
+                vibrator.vibrate(VIBRATION_DURATION);
+            }
+        }
+        notificationManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_NONE);
+    }
 
 
 
