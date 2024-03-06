@@ -1,8 +1,13 @@
 package com.example.vehiclesafe;
 
+import android.Manifest;
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
+import android.telephony.SmsManager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -12,7 +17,8 @@ import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
-import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -25,10 +31,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class Activity_Contacts extends AppCompatActivity {
     private FirebaseFirestore db;
     ContactAdapter adapter;
+    private static final int PERMISSION_REQUEST_CODE = 1;
     ActivityContactsBinding binding;
     List<String> contactList = new ArrayList<>();
     FirebaseAuth auth = FirebaseAuth.getInstance();
@@ -173,6 +181,7 @@ public class Activity_Contacts extends AppCompatActivity {
     }
     public static void checkIncomingNumber(Context context, String incomingNumber) {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
+        AtomicInteger flag= new AtomicInteger(1);
         String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
         db.collection("users").document(userId).collection("contacts")
                 .whereEqualTo("phoneNumber", incomingNumber) // Use whereEqualTo for efficient query
@@ -181,17 +190,66 @@ public class Activity_Contacts extends AppCompatActivity {
                     if (!queryDocumentSnapshots.isEmpty()) {
                         // Priority number found
                         Toast.makeText(context, "Priority number calling: " + incomingNumber, Toast.LENGTH_LONG).show();
-
+                        requestSmsPermission(context,incomingNumber,"Location");
+                        flag.set(2);
                     } else {
                         // Handle non-priority calls or log silently without flooding the user with toasts
                         // Toast.makeText(context, "Low priority number: " + incomingNumber, Toast.LENGTH_LONG).show();
                         Log.d("CheckIncomingNumber", "Non-priority call detected: " + incomingNumber);
+                        Toast.makeText(context, "Low Priority number calling: " + incomingNumber, Toast.LENGTH_LONG).show();
+                        if (flag.get() == 1) {
+                            Toast.makeText(context, "Low priority number calling: " + incomingNumber, Toast.LENGTH_LONG).show();
+                            requestSmsPermission(context, incomingNumber, " ");
+                        }
                     }
                 })
                 .addOnFailureListener(e -> {
                     // Log error or handle failure silently
                     Log.e("CheckIncomingNumber", "Error checking for priority number", e);
                 });
+        if(flag.equals(1))
+        {Toast.makeText(context, "Low priority number calling: " + incomingNumber, Toast.LENGTH_LONG).show();
+
+            requestSmsPermission(context,incomingNumber," ");
+
+        }
+    }
+
+    private static void requestSmsPermission(Context context,String incomingNumber, String location) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (ContextCompat.checkSelfPermission(context, android.Manifest.permission.SEND_SMS) == PackageManager.PERMISSION_GRANTED) {
+                // Permission already granted, proceed to send SMS
+                sendCustomizedSMS(context,incomingNumber, location);
+
+            } else {
+                // Request SMS permission
+                ActivityCompat.requestPermissions((Activity)context, new String[]{Manifest.permission.SEND_SMS}, PERMISSION_REQUEST_CODE);
+            }
+        } else {
+            // Permission is automatically granted on SDKs lower than Marshmallow
+            sendCustomizedSMS(context,incomingNumber, location);
+
+
+        }
+    }
+
+    private static void sendCustomizedSMS(Context context,String incomingNumber, String loc) {
+        SmsManager smsManager = SmsManager.getDefault();
+
+        // You can customize the SMS message here
+        String finalMessage = "Hello, This is " + loc + "! Rider is driving.";
+
+        try {
+            // Send the SMS
+            smsManager.sendTextMessage(incomingNumber, null, finalMessage, null, null);
+
+            // Optionally, you can handle the sent SMS here
+            Toast.makeText(context, "SMS sent successfully", Toast.LENGTH_SHORT).show();
+        } catch (Exception e) {
+            // Handle exceptions, e.g., permission denied or SMS not sent
+            Toast.makeText(context, "Failed to send SMS", Toast.LENGTH_SHORT).show();
+            e.printStackTrace();
+        }
     }
 
 
