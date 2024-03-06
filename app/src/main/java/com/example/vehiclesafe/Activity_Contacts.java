@@ -8,6 +8,7 @@ import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
+import android.location.LocationManager;
 import android.media.AudioManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -46,6 +47,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class Activity_Contacts extends AppCompatActivity {
     private FirebaseFirestore db;
     ContactAdapter adapter;
+    private LocationManager locationManager;
     private final static int REQUEST_CODE = 100;
 
     private static String addrr = "";
@@ -65,6 +67,8 @@ public class Activity_Contacts extends AppCompatActivity {
         Toast.makeText(Activity_Contacts.this, "Emergency Contacts Page", Toast.LENGTH_SHORT).show();
         db = FirebaseFirestore.getInstance();
         String userId = auth.getCurrentUser().getUid();
+        locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+        LocationHelper locationHelper = new LocationHelper(locationManager);
 
         binding.backBtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -116,6 +120,7 @@ public class Activity_Contacts extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 showAddContactDialog();
+
             }
         });
 
@@ -194,6 +199,7 @@ public class Activity_Contacts extends AppCompatActivity {
                 });
     }
     public static void checkIncomingNumber(Context context, String incomingNumber) {
+        LocationHelper locationHelper = new LocationHelper((LocationManager) context.getSystemService(Context.LOCATION_SERVICE));
 
             FirebaseFirestore db = FirebaseFirestore.getInstance();
             AtomicInteger flag = new AtomicInteger(1);
@@ -205,9 +211,10 @@ public class Activity_Contacts extends AppCompatActivity {
                         if (!queryDocumentSnapshots.isEmpty()) {
                             // Priority number found
                             Toast.makeText(context, "Priority number calling: " + incomingNumber, Toast.LENGTH_LONG).show();
-//                            String loc = getLastLocation(context);
-                            requestSmsPermission(context, incomingNumber, "Location");
-                            Toast.makeText(context, "" + "Location Link", Toast.LENGTH_SHORT).show();
+                            String googleMapsLink = locationHelper.getCurrentLocationLink();
+
+                            requestSmsPermission(context, incomingNumber, "Link"+googleMapsLink);
+                            Toast.makeText(context, "" + "Link"+googleMapsLink, Toast.LENGTH_SHORT).show();
                             flag.set(2);
                         } else {
                             // Handle non-priority calls or log silently without flooding the user with toasts
@@ -231,7 +238,7 @@ public class Activity_Contacts extends AppCompatActivity {
 
 
 
-    private static String  getLastLocation(Context context) {
+    private static void  getLastLocation(Context context) {
         if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             fusedLocationProviderClient.getLastLocation()
                     .addOnSuccessListener(new OnSuccessListener<Location>() {
@@ -241,7 +248,7 @@ public class Activity_Contacts extends AppCompatActivity {
                                 try {
                                     Geocoder geocoder = new Geocoder(context, Locale.getDefault());
                                     List<Address> addresses = geocoder.getFromLocation(location.getLatitude(), location.getLongitude(), 1);
-//                                    updateUI(addresses.get(0));
+                                    updateUI(addresses.get(0));
                                     addrr = addresses.get(0).getAddressLine(0);
                                 } catch (IOException e) {
                                     e.printStackTrace();
@@ -252,8 +259,12 @@ public class Activity_Contacts extends AppCompatActivity {
         } else {
             Toast.makeText(context, "Give Location permission", Toast.LENGTH_SHORT).show(); // Ask for permissions if not granted
         }
-        return addrr;
+
     }
+
+    private static void updateUI(Address address) {
+    }
+
 
     private static void requestSmsPermission(Context context,String incomingNumber, String location) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
