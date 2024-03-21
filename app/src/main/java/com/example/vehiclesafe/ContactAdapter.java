@@ -15,6 +15,7 @@ public class ContactAdapter extends RecyclerView.Adapter<ContactAdapter.ContactV
 
     private List<String> contacts;
     private OnDeleteClickListener onDeleteClickListener;
+    private OnEditClickListener onEditClickListener;
 
     // Constructor to initialize the list of contacts
     public ContactAdapter(List<String> contacts) {
@@ -34,6 +35,7 @@ public class ContactAdapter extends RecyclerView.Adapter<ContactAdapter.ContactV
         // Bind data to the views in each item
         holder.bindContact(contacts.get(position));
         holder.setDeleteClickListener(position);
+        holder.setEditClickListener(position); // Set edit click listener
     }
 
     @Override
@@ -46,34 +48,22 @@ public class ContactAdapter extends RecyclerView.Adapter<ContactAdapter.ContactV
     public class ContactViewHolder extends RecyclerView.ViewHolder {
 
         private TextView contactTextView;
-        private ImageView deleteButton;
+        private ImageView deleteButton, editbtn;
 
         public ContactViewHolder(@NonNull View itemView) {
             super(itemView);
             // Initialize views in each item
             contactTextView = itemView.findViewById(R.id.contactTextView);
             deleteButton = itemView.findViewById(R.id.delete_btn);
+            editbtn = itemView.findViewById(R.id.edit_btn);
         }
-
 
         // Method to bind contact data to the views
         public void bindContact(String contact) {
             contactTextView.setText(contact);
         }
 
-
-
         // Set click listener for delete button
-//        public void setDeleteClickListener(final int position) {
-//            deleteButton.setOnClickListener(new View.OnClickListener() {
-//                @Override
-//                public void onClick(View v) {
-//                    if (onDeleteClickListener != null) {
-//                        onDeleteClickListener.onDeleteClick(position);
-//                    }
-//                }
-//            });
-//        }
         public void setDeleteClickListener(final int position) {
             deleteButton.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -88,17 +78,35 @@ public class ContactAdapter extends RecyclerView.Adapter<ContactAdapter.ContactV
             });
         }
 
+        // Set click listener for edit button
+        public void setEditClickListener(final int position) {
+            editbtn.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (onEditClickListener != null) {
+                        // Pass the position to the onEditClick method
+                        onEditClickListener.onEditClick(position);
+                    }
+                }
+            });
+        }
     }
-
 
     // Interface to communicate delete button clicks to the activity/fragment
     public interface OnDeleteClickListener {
         void onDeleteClick(int position, String contactName);
+    }
 
+    // Interface to communicate edit button clicks to the activity/fragment
+    public interface OnEditClickListener {
+        void onEditClick(int position);
     }
 
     public void setOnDeleteClickListener(OnDeleteClickListener listener) {
         onDeleteClickListener = listener;
     }
 
+    public void setOnEditClickListener(OnEditClickListener listener) {
+        onEditClickListener = listener;
+    }
 }

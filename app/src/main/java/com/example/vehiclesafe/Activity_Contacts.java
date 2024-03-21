@@ -23,6 +23,8 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.Toast;
+
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import android.location.Address;
@@ -36,6 +38,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.vehiclesafe.databinding.ActivityContactsBinding;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -155,7 +158,81 @@ public class Activity_Contacts extends AppCompatActivity {
             }
         });
 
+        adapter.setOnEditClickListener(new ContactAdapter.OnEditClickListener() {
+            @Override
+            public void onEditClick(int position) {
+                Toast.makeText(Activity_Contacts.this, "Edit is clicked"+position, Toast.LENGTH_SHORT).show();
+                String contactInfo = contactList.get(position);
+                String[] parts = contactInfo.split(" - ");
+                String name = parts[0];
+                String phoneNumber = parts[1];
+
+                // Create an edit dialog
+                AlertDialog.Builder builder = new AlertDialog.Builder(Activity_Contacts.this);
+                View dialogView = LayoutInflater.from(Activity_Contacts.this).inflate(R.layout.dialog_layoutedit, null);
+                builder.setView(dialogView);
+
+                EditText editTextName = dialogView.findViewById(R.id.editTextName);
+                EditText editTextContact = dialogView.findViewById(R.id.editTextContact);
+                Button buttonSaveContact = dialogView.findViewById(R.id.buttonSaveContact);
+
+                editTextName.setText(name);
+                editTextContact.setText(phoneNumber);
+
+                AlertDialog alertDialog = builder.create();
+
+                buttonSaveContact.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        String updatedName = editTextName.getText().toString().trim();
+                        String updatedContact = editTextContact.getText().toString().trim();
+
+                        // Update the contact in the list
+                        String updatedContactInfo = updatedName + " - " + updatedContact;
+                        contactList.set(position, updatedContactInfo);
+                        adapter.notifyDataSetChanged(); // Notify adapter about the data change
+// Update the contact in Firestore
+                        // Get the user ID of the current user
+                        String userId = auth.getCurrentUser().getUid();
+
+// Query Firestore to find the document ID of the contact you want to update
+                        db.collection("users").document(userId).collection("contacts")
+                                .whereEqualTo("phoneNumber", phoneNumber)
+                                .get()
+                                .addOnSuccessListener(queryDocumentSnapshots -> {
+                                    for (DocumentSnapshot document : queryDocumentSnapshots) {
+                                        String documentId = document.getId(); // Get the document ID of the contact
+
+                                        // Update the contact document with the new data
+                                        db.collection("users").document(userId).collection("contacts")
+                                                .document(documentId)
+                                                .update("name", updatedName, "phoneNumber", updatedContact)
+                                                .addOnSuccessListener(aVoid -> {
+                                                    // Handle successful update
+                                                    Toast.makeText(Activity_Contacts.this, "Contact updated successfully", Toast.LENGTH_SHORT).show();
+                                                })
+                                                .addOnFailureListener(e -> {
+                                                    // Handle update failure
+                                                    Toast.makeText(Activity_Contacts.this, "Error updating contact", Toast.LENGTH_SHORT).show();
+                                                });
+                                    }
+                                })
+                                .addOnFailureListener(e -> {
+                                    // Handle query failure
+                                    Toast.makeText(Activity_Contacts.this, "Error querying contact", Toast.LENGTH_SHORT).show();
+                                });
+
+                        alertDialog.dismiss();
+                    }
+                });
+
+                alertDialog.show();
+            }
+        });
+
     }
+
+
 
     private void deleteContactFromFirestore(String phoneNumber) {
         String userId = auth.getCurrentUser().getUid();
@@ -433,6 +510,7 @@ public class Activity_Contacts extends AppCompatActivity {
             e.printStackTrace();
         }
     }
+
 
 
 }
