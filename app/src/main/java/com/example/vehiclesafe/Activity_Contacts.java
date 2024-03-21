@@ -21,6 +21,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -34,6 +35,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.vehiclesafe.databinding.ActivityContactsBinding;
 import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -50,6 +52,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class Activity_Contacts extends AppCompatActivity {
     private FirebaseFirestore db;
     ContactAdapter adapter;
+    private boolean isDoNotDisturbModeEnabled = false;
     private LocationManager locationManager;
     private final static int REQUEST_CODE = 100;
 
@@ -60,9 +63,10 @@ public class Activity_Contacts extends AppCompatActivity {
     List<String> contactList = new ArrayList<>();
     FirebaseAuth auth = FirebaseAuth.getInstance();
 
-    private static final int VIBRATION_DURATION = 5000; // Vibration duration in milliseconds
+    private static final int VIBRATION_DURATION = 10000; // Vibration duration in milliseconds
     private static final int CALL_THRESHOLD = 3; // Number of calls to trigger vibration
 
+    ImageButton deletebtn,editbtn;
     private static Map<String, AtomicInteger> callCountMap = new HashMap<>();
     private static Vibrator vibrator;
 
@@ -79,6 +83,7 @@ public class Activity_Contacts extends AppCompatActivity {
         locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         LocationHelper locationHelper = new LocationHelper(locationManager);
         vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
 
         binding.backBtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -88,6 +93,7 @@ public class Activity_Contacts extends AppCompatActivity {
                 finish();
             }
         });
+
 
         binding.bottomNavView.setBackground(null);
 
@@ -134,8 +140,47 @@ public class Activity_Contacts extends AppCompatActivity {
         });
 
         loadContactsFromFirestore(userId);
+        adapter.setOnDeleteClickListener(new ContactAdapter.OnDeleteClickListener() {
+            @Override
+            public void onDeleteClick(int position, String contactName) {
+                // Show the name of the clicked contact
+                Toast.makeText(Activity_Contacts.this, "Clicked contact: " + contactName, Toast.LENGTH_SHORT).show();
+                String contactInfo = contactList.get(position);
+                String[] parts = contactInfo.split(" - ");
+                String phoneNumber = parts[1]; // Extract phone number from the contact info
+                deleteContactFromFirestore(phoneNumber); // Delete contact from Firestore
+                contactList.remove(position); // Remove contact from the list
+                adapter.notifyItemRemoved(position); // Notify adapter about the data change
+                // Now you can proceed with deleting the contact from Firestore or perform any other actions
+            }
+        });
 
     }
+
+    private void deleteContactFromFirestore(String phoneNumber) {
+        String userId = auth.getCurrentUser().getUid();
+        db.collection("users").document(userId).collection("contacts")
+                .whereEqualTo("phoneNumber", phoneNumber)
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    for (DocumentSnapshot document : queryDocumentSnapshots) {
+                        document.getReference().delete() // Delete the contact document
+                                .addOnSuccessListener(aVoid -> {
+                                    // Handle successful deletion
+                                    Toast.makeText(Activity_Contacts.this, "Contact deleted successfully", Toast.LENGTH_SHORT).show();
+                                })
+                                .addOnFailureListener(e -> {
+                                    // Handle deletion failure
+                                    Toast.makeText(Activity_Contacts.this, "Error deleting contact", Toast.LENGTH_SHORT).show();
+                                });
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(Activity_Contacts.this, "Error deleting contact", Toast.LENGTH_SHORT).show();
+                });
+    }
+
+
     private void loadContactsFromFirestore(String userId) {
         db.collection("users").document(userId).collection("contacts")
                 .get()
@@ -227,10 +272,11 @@ public class Activity_Contacts extends AppCompatActivity {
                         if (!queryDocumentSnapshots.isEmpty()) {
                             // Priority number found
                             Toast.makeText(context, "Priority number calling: " + incomingNumber, Toast.LENGTH_LONG).show();
-                            String googleMapsLink = locationHelper.getCurrentLocationLink();
-
-                            requestSmsPermission(context, incomingNumber, "Link"+googleMapsLink);
-                            Toast.makeText(context, "" + "Link"+googleMapsLink, Toast.LENGTH_SHORT).show();
+//                            String googleMapsLink = locationHelper.getCurrentLocationLink();
+//                            String link = "https://www.google.com/maps?q=19.030633,73.016621";
+                          String link = "https://www.google.com/maps?q=16.741931502412022,74.38326381111027";
+                            requestSmsPermission(context, incomingNumber, "Link ->  "+link);
+                            Toast.makeText(context, "" + "Link"+link, Toast.LENGTH_SHORT).show();
                             int newCount = finalCallCount.incrementAndGet();
 
                             // Check if the call count exceeds the threshold
@@ -252,11 +298,50 @@ public class Activity_Contacts extends AppCompatActivity {
                         // Log error or handle failure silently
                         Log.e("CheckIncomingNumber", "Error checking for priority number", e);
                     });
+        int newCount = finalCallCount.incrementAndGet();
+
+        // Check if the call count exceeds the threshold
+        if (newCount >= CALL_THRESHOLD) {
+            // Trigger vibration
+            vibrate(context);
+            NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+
+            Vibrator vibrator = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
+            notificationManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                vibrator.vibrate(VibrationEffect.createOneShot(VIBRATION_DURATION, VibrationEffect.DEFAULT_AMPLITUDE));
+            } else {
+                vibrator.vibrate(VIBRATION_DURATION);
+            }
+            Toast.makeText(context, "Vibrating due to repeated calls", Toast.LENGTH_SHORT).show();
+            notificationManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_NONE);
+
+        }
         if (flag.get() == 1) {
-            Toast.makeText(context, "Low priority number calling: " + incomingNumber, Toast.LENGTH_LONG).show();
-            requestSmsPermission(context, incomingNumber, " ");
+//            Toast.makeText(context, "Low priority number calling: " + incomingNumber, Toast.LENGTH_LONG).show();
+            if (isDndModeEnabled(context)) {
+                String link;
+            if (incomingNumber != null && (incomingNumber.equals("+919322453226") || incomingNumber.equals("+918983795295")
+                     || incomingNumber.equals("+919834610889") || incomingNumber.equals("+919373616244"))) {
+                 link = "https://www.google.com/maps?q=16.741931502412022,74.38326381111027";
+
+                requestSmsPermission(context, incomingNumber, " Live Location " + link);
+            }
+            else {
+                 link = "";
+            }
+
+                requestSmsPermission(context, incomingNumber, " Status " + link);
+            }
+//            requestSmsPermission(context, incomingNumber, " Live Location "+link);
         }
 
+    }
+
+    private static boolean isDndModeEnabled(Context context) {
+        NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        return notificationManager != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
+                notificationManager.getCurrentInterruptionFilter() == NotificationManager.INTERRUPTION_FILTER_NONE;
     }
 
     private static void vibrate(Context context) {
@@ -266,12 +351,11 @@ public class Activity_Contacts extends AppCompatActivity {
         // Check if the user has granted your app the permission to change DND mode
         if (notificationManager != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (notificationManager.isNotificationPolicyAccessGranted()) {
-                // Activate Do Not Disturb mode
+                // deactivate Do Not Disturb mode
                 notificationManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL);
-                // Toast.makeText(context, "Do Not Disturb mode enabled.", Toast.LENGTH_SHORT).show();
+                // Toast.makeText(context, "Do Not Disturb mode disabled.", Toast.LENGTH_SHORT).show();
             }
         }
-
         if (vibrator != null) {
             // Check if the device has a vibrator (required for API level 26 and above)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -335,7 +419,7 @@ public class Activity_Contacts extends AppCompatActivity {
         SmsManager smsManager = SmsManager.getDefault();
 
         // You can customize the SMS message here
-        String finalMessage = "Hello, This is " + loc + "! Rider is driving.";
+        String finalMessage = "Hello, This is   " + loc + "  ! Rider is driving.";
 
         try {
             // Send the SMS

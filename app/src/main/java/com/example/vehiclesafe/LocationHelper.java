@@ -19,16 +19,12 @@ public class LocationHelper {
         try {
             // Request location updates
             locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5000, 10, locationListener);
-
             // Wait for a moment to receive location updates
             Thread.sleep(5000);
-
             // Stop receiving location updates
             locationManager.removeUpdates(locationListener);
-
             // Get the last known location
             Location lastKnownLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-
             if (lastKnownLocation != null) {
                 // Generate Google Maps link
                 return getGoogleMapsLink(lastKnownLocation.getLatitude(), lastKnownLocation.getLongitude());

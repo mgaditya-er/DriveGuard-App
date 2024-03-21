@@ -178,6 +178,7 @@ private void showMissedCalls() {
 //                        // Vibrate for 500 milliseconds
 //                        vibrator.vibrate(500);
 //                        requestSmsPermission(name,number);
+                        Toast.makeText(this, "Vibrating due to repeated calls", Toast.LENGTH_SHORT).show();
                     }
                     for (Map<String, String> data : dataList) {
                         if (data.get("number").startsWith(number)) {
